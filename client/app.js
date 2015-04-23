@@ -1,5 +1,8 @@
 //configuration
 var app = angular.module("myWorld", ['ngRoute']);
+app.run(function(AuthSvc){
+  AuthSvc.setUser();
+});
 
 app.config(function($routeProvider, $locationProvider){
   $routeProvider
@@ -23,32 +26,47 @@ app.config(function($routeProvider, $locationProvider){
     $locationProvider.html5Mode(true);
 });
 // services
-app.factory("AuthSvc", function($q, $http){
-  var _user = {};
+app.factory("AuthSvc", function($window, $q, $http){
+  var _user = {
+    authenticated: function(){
+      return this.username != null;
+    } 
+  };
   return {
     authenticate: authenticate,
     setUser: setUser,
-    user: _user
+    logout: logout,
+    user: _user,
+    getToken: getToken
   }; 
   
-  function setUser(token){
+  function getToken(){
+    return $window.sessionStorage.getItem("token"); 
+  }
+  function logout(){
+    delete _user.username;
+    $window.sessionStorage.removeItem("token");
+  }
+  
+  function setUser(){
+    if(!$window.sessionStorage.getItem("token"))
+      return;
     var dfd = $q.defer();
-    $http.get("/api/session/" + token).then(
+    $http.get("/api/session/" + $window.sessionStorage.getItem("token")).then(
       function(result){
+        _user.username = result.data.username;
          dfd.resolve(result.data); 
       }
     );
     return dfd.promise;
-    
   }
   
   function authenticate(user){
     var dfd = $q.defer();
     $http.post("/api/sessions", user).then(
       function(result){
-        var token = result.data;
-        setUser(token).then(function(result2){
-          _user.username = result2.username;
+        window.sessionStorage.setItem("token", result.data);
+        setUser().then(function(result2){
           dfd.resolve(_user); 
         });
       },
@@ -60,8 +78,9 @@ app.factory("AuthSvc", function($q, $http){
   }
 });
 
-app.factory("PeopleSvc", function($q, $http ){
+app.factory("PeopleSvc", function($q, $http, AuthSvc ){
   return {
+    user: AuthSvc.user,
     getPeople: function(){
       var dfd = $q.defer();
       $http.get("/api/people").then(function(result){
@@ -71,7 +90,7 @@ app.factory("PeopleSvc", function($q, $http ){
     },
     insertPerson: function(person){
       var dfd = $q.defer();  
-      $http.post("/api/people", person).then(
+      $http.post("/api/people/" + AuthSvc.getToken(), person).then(
         function(result){
           console.log(result);
           dfd.resolve(result.data);
@@ -114,14 +133,15 @@ app.factory("NavSvc", function(){
 });
 
 //controllers
-app.controller("LoginCtrl", function($scope, AuthSvc){
+app.controller("LoginCtrl", function($scope, $location, AuthSvc){
+  if(AuthSvc.user.authenticated())
+    $location.path("/");
   $scope.user = {};
   
   $scope.login = function(){
     AuthSvc.authenticate($scope.user).then(
-      function(token){
-        $scope.token = token;
-        $scope.error = null;
+      function(){
+        $location.path("/"); 
       },
       function(error){
         $scope.token = null;
@@ -130,21 +150,25 @@ app.controller("LoginCtrl", function($scope, AuthSvc){
     );
   };
 });
-app.controller("NavCtrl", function($scope, NavSvc){
+app.controller("NavCtrl", function($scope, NavSvc, AuthSvc){
   $scope.tabs = NavSvc.tabs;
-  
+  $scope.user = AuthSvc.user;
+  $scope.logout = function(){
+    AuthSvc.logout();
+  };
 });
+
 app.controller("HomeCtrl", function($scope, NavSvc){
   console.log("in home control");
   NavSvc.setTab("Home");
   $scope.message = "I am the home control"; 
 });
 
-app.controller("PeopleCtrl", function($scope, NavSvc, PeopleSvc, AuthSvc){
+app.controller("PeopleCtrl", function($scope, NavSvc, PeopleSvc){
   NavSvc.setTab("People");
   $scope.inserting = {};
   $scope.message = "I am the people control";
-  $scope.user = AuthSvc.user;
+  $scope.user = PeopleSvc.user;
   $scope.insert = function(){
     PeopleSvc.insertPerson($scope.inserting).then(
       function(person){
@@ -183,7 +207,8 @@ app.directive("myWorldNav", function(){
   return {
     restrict: "E",
     templateUrl: "/templates/nav.html",
-    controller: "NavCtrl"
+    controller: "NavCtrl",
+    scope: {}
   }
 });
 app.directive("foo", function(){

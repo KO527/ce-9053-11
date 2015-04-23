@@ -6,7 +6,7 @@ var jwt = require("jwt-simple");
 var SECRET = "foo";
 
 var PersonSchema = new mongoose.Schema({
-  name: { type: String, unique: true, required: true }  
+  name: { type: String, unique: true, required: true }
 });
 
 var Person = mongoose.model("Person", PersonSchema);
@@ -61,6 +61,8 @@ app.get("/api/session/:token", function(req, res){
 });
 
 app.post("/api/sessions", function(req, res){
+  if(!req.body.password) 
+    return res.status(500).send({error: "No password??"});
   User.findOne(req.body, function(err, user){
     if(user){
       var _user = {
@@ -83,7 +85,13 @@ app.delete("/api/people/:id", function(req, res){
     res.send({deleted: true});
   });
 })
-app.post("/api/people", function(req, res){
+app.post("/api/people/:token", function(req, res){
+  try{
+    jwt.decode(req.params.token, SECRET) 
+  }
+  catch(ex){
+    return res.status(401).send({ error: "bad boy"});
+  }
   Person.create(req.body, function(err, person){
     if(err){
       res.status(500).send(err); 
