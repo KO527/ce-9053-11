@@ -1,12 +1,22 @@
 var express = require("express");
 var mongoose = require("mongoose");
 var bodyParser = require("body-parser");
+var jwt = require("jwt-simple");
+
+var SECRET = "foo";
 
 var PersonSchema = new mongoose.Schema({
   name: { type: String, unique: true, required: true }  
 });
 
 var Person = mongoose.model("Person", PersonSchema);
+
+var UserSchema = new mongoose.Schema({
+  username: String,
+  password: String
+});
+
+var User = mongoose.model("User", UserSchema);
 
 mongoose.connect("mongodb://localhost/my_world");
 mongoose.connection.once("open", function(){
@@ -29,7 +39,7 @@ app.use(function(req, res, next){
   next();
 });
 
-var paths = ["/", "/people", "/things"];
+var paths = ["/", "/people", "/things", "/login"];
 
 paths.forEach(function(path){
   app.get(path, function(req, res, next){
@@ -38,6 +48,30 @@ paths.forEach(function(path){
 });
 
 //api
+app.get("/api/session/:token", function(req, res){
+  try{
+    var decoded = jwt.decode(req.params.token, SECRET);
+    User.findById(decoded._id, function(err, user){
+      res.send(user); 
+    });
+  }
+  catch(ex){
+    
+  }
+});
+
+app.post("/api/sessions", function(req, res){
+  User.findOne(req.body, function(err, user){
+    if(user){
+      var _user = {
+        _id: user._id
+      };
+      return res.send(jwt.encode(_user, SECRET));
+    }
+    else
+      return res.status(401).send({"error": "no user found"});
+  }); 
+});
 app.get("/api/people", function(req, res){
   Person.find({}).sort("name").exec(function(err, people){
     res.send(people);

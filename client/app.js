@@ -14,11 +14,52 @@ app.config(function($routeProvider, $locationProvider){
     .when("/things", {
       controller: "ThingsCtrl",
       templateUrl: "/templates/things.html"
+    })
+    .when("/login", {
+      controller: "LoginCtrl",
+      templateUrl: "/templates/login.html"
     });
     
     $locationProvider.html5Mode(true);
 });
 // services
+app.factory("AuthSvc", function($q, $http){
+  var _user = {};
+  return {
+    authenticate: authenticate,
+    setUser: setUser,
+    user: _user
+  }; 
+  
+  function setUser(token){
+    var dfd = $q.defer();
+    $http.get("/api/session/" + token).then(
+      function(result){
+         dfd.resolve(result.data); 
+      }
+    );
+    return dfd.promise;
+    
+  }
+  
+  function authenticate(user){
+    var dfd = $q.defer();
+    $http.post("/api/sessions", user).then(
+      function(result){
+        var token = result.data;
+        setUser(token).then(function(result2){
+          _user.username = result2.username;
+          dfd.resolve(_user); 
+        });
+      },
+      function(result){
+        dfd.reject(result.data.error);
+      }
+    );
+    return dfd.promise;
+  }
+});
+
 app.factory("PeopleSvc", function($q, $http ){
   return {
     getPeople: function(){
@@ -73,6 +114,22 @@ app.factory("NavSvc", function(){
 });
 
 //controllers
+app.controller("LoginCtrl", function($scope, AuthSvc){
+  $scope.user = {};
+  
+  $scope.login = function(){
+    AuthSvc.authenticate($scope.user).then(
+      function(token){
+        $scope.token = token;
+        $scope.error = null;
+      },
+      function(error){
+        $scope.token = null;
+        $scope.error = error;
+      }
+    );
+  };
+});
 app.controller("NavCtrl", function($scope, NavSvc){
   $scope.tabs = NavSvc.tabs;
   
@@ -83,10 +140,11 @@ app.controller("HomeCtrl", function($scope, NavSvc){
   $scope.message = "I am the home control"; 
 });
 
-app.controller("PeopleCtrl", function($scope, NavSvc, PeopleSvc){
+app.controller("PeopleCtrl", function($scope, NavSvc, PeopleSvc, AuthSvc){
   NavSvc.setTab("People");
   $scope.inserting = {};
   $scope.message = "I am the people control";
+  $scope.user = AuthSvc.user;
   $scope.insert = function(){
     PeopleSvc.insertPerson($scope.inserting).then(
       function(person){
@@ -121,7 +179,7 @@ app.controller("FooCtrl", function($scope){
 });
 
 //directives
-app.directive("myWorldDirective", function(){
+app.directive("myWorldNav", function(){
   return {
     restrict: "E",
     templateUrl: "/templates/nav.html",
