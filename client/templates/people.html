@@ -1,4 +1,3 @@
-<h1>{{ user }}</h1>
 <div class="alert alert-danger" ng-show="error">
   {{ error }} 
 </div>
@@ -12,10 +11,21 @@
     <label>Name</label>
     <input type="text" class="form-control" ng-model="inserting.name">
   </div>
-  <button class="btn btn-default" ng-click="insert()">Save</button>
+  <button class="btn btn-success" ng-click="insert()">Save</button>
 </form>
 <ul class="list-group">
   <li class="list-group-item" ng-repeat="person in people">
-    {{ person.name }} {{ person._id}}
+    <div class="row">
+      <div class="col-md-9">
+        {{ person.name }}
+      </div>
+      <div class="col-md-1">
+        <button ng-click="edit(person)" class="btn btn-primary">Edit</button>
+      </div>
+      <div class="col-md-2">
+        <button ng-click="delete(person)" class="btn btn-danger">Delete</button>
+      </div>
+    </div>
   </li>
 </ul>
+<h6>{{ user }}</h6>

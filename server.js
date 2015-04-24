@@ -39,7 +39,7 @@ app.use(function(req, res, next){
   next();
 });
 
-var paths = ["/", "/people", "/things", "/login"];
+var paths = ["/", "/people/:id?", "/things", "/login"];
 
 paths.forEach(function(path){
   app.get(path, function(req, res, next){
@@ -80,6 +80,12 @@ app.get("/api/people", function(req, res){
   }); 
 });
 
+app.get("/api/people/:id", function(req, res){
+  Person.findById(req.params.id).exec(function(err, person){
+    res.send(person);
+  }); 
+});
+
 app.delete("/api/people/:id", function(req, res){
   Person.remove({_id: req.params.id}).exec(function(){
     res.send({deleted: true});
@@ -98,6 +104,23 @@ app.post("/api/people/:token", function(req, res){
     }
     else{
       res.send(person); 
+    }
+  });
+});
+
+app.post("/api/people/:id/:token", function(req, res){
+  try{
+    jwt.decode(req.params.token, SECRET) 
+  }
+  catch(ex){
+    return res.status(401).send({ error: "bad boy"});
+  }
+  Person.update({ _id: req.params.id } , { name: req.body.name }, function(err, result){
+    if(err){
+      res.status(500).send(err); 
+    }
+    else{
+      res.send(result); 
     }
   });
 });
