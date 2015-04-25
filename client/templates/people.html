@@ -11,6 +11,12 @@
     <label>Name</label>
     <input type="text" class="form-control" ng-model="inserting.name">
   </div>
+  <div class="checkbox">
+    <label>
+    <input type="checkbox" ng-model="inserting.active" />
+    Active
+    </label>
+  </div>
   <button class="btn btn-success" ng-click="insert()">Save</button>
 </form>
 <ul class="list-group">
@@ -18,6 +24,8 @@
     <div class="row">
       <div class="col-md-9">
         {{ person.name }}
+        <br />
+        <span class="label" ng-class="{'label-warning': !person.active, 'label-success': person.active}">{{ person.active }}</span>
       </div>
       <div class="col-md-3 text-right">
         <button ng-click="edit(person)" class="btn btn-primary">Edit</button>

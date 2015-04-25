@@ -6,7 +6,8 @@ var jwt = require("jwt-simple");
 var SECRET = "foo";
 
 var PersonSchema = new mongoose.Schema({
-  name: { type: String, unique: true, required: true }
+  name: { type: String, unique: true, required: true },
+  active: { type: Boolean, default: true },
 });
 
 var Person = mongoose.model("Person", PersonSchema);
@@ -33,11 +34,6 @@ app.set("view engine", "jade");
 app.use(express.static(__dirname + "/client"));
 
 app.use(bodyParser.json());
-
-app.use(function(req, res, next){
-  req.foo = Math.random().toString();
-  next();
-});
 
 var authorize = function(req, res, next){
   try{

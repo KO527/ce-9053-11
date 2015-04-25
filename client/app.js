@@ -201,7 +201,9 @@ app.controller("HomeCtrl", function($scope, NavSvc){
 
 app.controller("PeopleCtrl", function($scope, $location, NavSvc, PeopleSvc){
   NavSvc.setTab("People");
-  $scope.inserting = {};
+  $scope.inserting = {
+    active: false
+  };
   $scope.message = "I am the people control";
   $scope.user = PeopleSvc.user;
   $scope.delete = function(person){
