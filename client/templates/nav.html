@@ -7,7 +7,7 @@
           </a>
       </li>
     </ul>
-    <div class="navbar-right navbar-form">
+    <div class="navbar-right navbar-form" ng-show="showLoginButton">
       <a class="btn btn-default" href="/login" ng-hide="user.authenticated()">Login</a> 
       <button class="btn btn-default" ng-click="logout()" ng-show="user.authenticated()">Logout {{ user.username }}</button> 
     </div>

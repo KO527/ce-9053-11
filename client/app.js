@@ -280,7 +280,9 @@ app.directive("myWorldNav", function(){
     restrict: "E",
     templateUrl: "/templates/nav.html",
     controller: "NavCtrl",
-    scope: {}
+    scope: {
+      showLoginButton: '@'
+    }
   }
 });
 app.directive("foo", function(){
@@ -288,6 +290,7 @@ app.directive("foo", function(){
     restrict: "EA",
     templateUrl: "/templates/foo.html",
     controller: "FooCtrl",
-    scope: {}
+    scope: {
+    }
   }; 
 });
