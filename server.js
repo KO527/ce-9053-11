@@ -39,6 +39,18 @@ app.use(function(req, res, next){
   next();
 });
 
+var authorize = function(req, res, next){
+  try{
+    var decoded = jwt.decode(req.params.token, SECRET);
+    User.findById(decoded._id, function(err, user){
+      next();
+    });
+  }
+  catch(ex){
+    res.status(401).send({error: "You must be authorized for this action"});
+  }
+};
+
 var paths = ["/", "/people/:id?", "/things", "/login"];
 
 paths.forEach(function(path){
@@ -86,18 +98,12 @@ app.get("/api/people/:id", function(req, res){
   }); 
 });
 
-app.delete("/api/people/:id", function(req, res){
+app.delete("/api/people/:id", authorize, function(req, res){
   Person.remove({_id: req.params.id}).exec(function(){
     res.send({deleted: true});
   });
 })
-app.post("/api/people/:token", function(req, res){
-  try{
-    jwt.decode(req.params.token, SECRET) 
-  }
-  catch(ex){
-    return res.status(401).send({ error: "bad boy"});
-  }
+app.post("/api/people/:token", authorize, function(req, res){
   Person.create(req.body, function(err, person){
     if(err){
       res.status(500).send(err); 
@@ -108,13 +114,7 @@ app.post("/api/people/:token", function(req, res){
   });
 });
 
-app.post("/api/people/:id/:token", function(req, res){
-  try{
-    jwt.decode(req.params.token, SECRET) 
-  }
-  catch(ex){
-    return res.status(401).send({ error: "bad boy"});
-  }
+app.post("/api/people/:id/:token", authorize, function(req, res){
   Person.update({ _id: req.params.id } , { name: req.body.name }, function(err, result){
     if(err){
       res.status(500).send(err); 

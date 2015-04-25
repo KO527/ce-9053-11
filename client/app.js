@@ -88,11 +88,11 @@ app.factory("PeopleSvc", function($q, $http, AuthSvc ){
     deletePerson: function(person){
       var dfd = $q.defer();
       $http.delete("/api/people/" + person._id).then(
-        function(){
-          dfd.resolve(); 
+        function(result){
+          dfd.resolve(result.data); 
         },
-        function(){
-          dfd.reject(); 
+        function(result){
+          dfd.reject(result.data); 
         }
       );
       return dfd.promise;
@@ -128,7 +128,6 @@ app.factory("PeopleSvc", function($q, $http, AuthSvc ){
       var dfd = $q.defer();  
       $http.post("/api/people/" + person._id + "/" + AuthSvc.getToken(), person).then(
         function(result){
-          console.log(result);
           dfd.resolve(result.data);
         },
         function(result){
@@ -206,9 +205,16 @@ app.controller("PeopleCtrl", function($scope, $location, NavSvc, PeopleSvc){
   $scope.message = "I am the people control";
   $scope.user = PeopleSvc.user;
   $scope.delete = function(person){
-    PeopleSvc.deletePerson(person).then(function(){
-      activate();
-    });
+    PeopleSvc.deletePerson(person).then(
+      function(){
+        $scope.error = null;
+        $scope.success = "User has been deleted";
+        activate();
+      },
+      function(error){
+        $scope.error = error;
+      }
+    );
   };
   $scope.edit = function(person){
     $location.path("/people/" + person._id);
@@ -242,7 +248,9 @@ app.controller("PersonCtrl", function($scope, $location, $routeParams, NavSvc, P
       function(person){
         $location.path("/people");
       },
-      function(){}
+      function(error){
+        $scope.error = error; 
+      }
     );
   };
   function activate(){
