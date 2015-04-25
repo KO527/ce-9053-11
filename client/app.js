@@ -47,6 +47,7 @@ app.factory("AuthSvc", function($window, $q, $http){
   function getToken(){
     return $window.sessionStorage.getItem("token"); 
   }
+  
   function logout(){
     delete _user.username;
     $window.sessionStorage.removeItem("token");
@@ -69,7 +70,7 @@ app.factory("AuthSvc", function($window, $q, $http){
     var dfd = $q.defer();
     $http.post("/api/sessions", user).then(
       function(result){
-        window.sessionStorage.setItem("token", result.data);
+        $window.sessionStorage.setItem("token", result.data);
         setUser().then(function(result2){
           dfd.resolve(_user); 
         });
@@ -201,9 +202,6 @@ app.controller("HomeCtrl", function($scope, NavSvc){
 
 app.controller("PeopleCtrl", function($scope, $location, NavSvc, PeopleSvc){
   NavSvc.setTab("People");
-  $scope.inserting = {
-    active: false
-  };
   $scope.message = "I am the people control";
   $scope.user = PeopleSvc.user;
   $scope.delete = function(person){
@@ -226,7 +224,6 @@ app.controller("PeopleCtrl", function($scope, $location, NavSvc, PeopleSvc){
       function(person){
         $scope.success = "Insert successful for " + person.name;
         $scope.error = null;
-        $scope.inserting = {};
         activate();
       },
       function(error){
@@ -236,6 +233,9 @@ app.controller("PeopleCtrl", function($scope, $location, NavSvc, PeopleSvc){
     );
   };
   function activate(){
+    $scope.inserting = {
+      active: false
+    };
     PeopleSvc.getPeople().then(function(people){
       $scope.people = people;
     });
@@ -283,7 +283,7 @@ app.directive("myWorldNav", function(){
     scope: {
       showLoginButton: '@'
     }
-  }
+  };
 });
 app.directive("foo", function(){
   return {

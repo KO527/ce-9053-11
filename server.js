@@ -8,6 +8,7 @@ var SECRET = "foo";
 var PersonSchema = new mongoose.Schema({
   name: { type: String, unique: true, required: true },
   active: { type: Boolean, default: true },
+  color: { type: String, default: 'yellow' }
 });
 
 var Person = mongoose.model("Person", PersonSchema);
@@ -111,7 +112,7 @@ app.post("/api/people/:token", authorize, function(req, res){
 });
 
 app.post("/api/people/:id/:token", authorize, function(req, res){
-  Person.update({ _id: req.params.id } , { name: req.body.name }, function(err, result){
+  Person.update({ _id: req.params.id } , { name: req.body.name, color: req.body.color }, function(err, result){
     if(err){
       res.status(500).send(err); 
     }

@@ -7,5 +7,13 @@
         <label>Name</label>
         <input class="form-control" ng-model="person.name" />
     </div>
+    <div class="form-group">
+        <label>Color</label>
+        <select class="form-control" ng-model="person.color">
+            <option value="blue">Blue</option>
+            <option value="yellow">Yellow</option>
+            <option value="green">Green</option>
+        </select>
+    </div>
     <button class="btn btn-success" ng-click="save()">Save</button>
 </form>
