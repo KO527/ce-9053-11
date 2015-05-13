@@ -2,7 +2,7 @@ var express = require("express");
 var mongoose = require("mongoose");
 var bodyParser = require("body-parser");
 var jwt = require("jwt-simple");
-
+var db = require("./config/db");
 var SECRET = "foo";
 
 var PersonSchema = new mongoose.Schema({
@@ -20,6 +20,14 @@ var UserSchema = new mongoose.Schema({
 
 var User = mongoose.model("User", UserSchema);
 
+var ThingSchema = new mongoose.Schema({
+  name: { type: String, unique: true, required: true },
+  color: { type: String },
+  description: { type: String }
+});
+
+var Thing = mongoose.model("Thing", ThingSchema);
+
 mongoose.connect("mongodb://localhost/my_world");
 mongoose.connection.once("open", function(){
   console.log("i am connected");
@@ -33,8 +41,9 @@ app.locals.pretty = true;
 app.set("view engine", "jade");
 
 app.use(express.static(__dirname + "/client"));
-
+app.use(express.static(__dirname + "/prod"));
 app.use(bodyParser.json());
+
 
 var authorize = function(req, res, next){
   try{
@@ -49,10 +58,11 @@ var authorize = function(req, res, next){
 };
 
 var paths = ["/", "/people/:id?", "/things", "/login"];
+var ENV = process.env.ENV || "development";
 
 paths.forEach(function(path){
   app.get(path, function(req, res, next){
-    res.render("index");
+    res.render("index", {ENV:ENV});
   });
 });
 
@@ -122,5 +132,45 @@ app.post("/api/people/:id/:token", authorize, function(req, res){
   });
 });
 
+app.post("/api/things/")
+Thing.get("/", function(req, res){
+  Thing.find({}).sort("name").exec(function(err, things){
+    res.send(things);
+  }); 
+});
+
+app.get("/api/things/:id", function(req, res){
+  Thing.findById(req.params.id).exec(function(err, thing){
+    res.send(thing);
+  }); 
+});
+
+app.delete("/api/things/:id/:token", authorize, function(req, res){
+  Thing.remove({_id: req.params.id}).exec(function(){
+    res.send({deleted: true});
+  });
+});
+
+app.post("/api/things/:token", authorize, function(req, res){
+  Thing.create(req.body, function(err, thing){
+    if(err){
+      res.status(500).send(err); 
+    }
+    else{
+      res.send(thing); 
+    }
+  });
+});
+
+app.post("/api/things/:id/:token", authorize, function(req, res){
+  Thing.update({ _id: req.params.id } , { name: req.body.name, color: req.body.color, description: req.body.description }, function(err, result){
+    if(err){
+      res.status(500).send(err); 
+    }
+    else{
+      res.send(result); 
+    }
+  });
+});
 
 app.listen(process.env.PORT);
