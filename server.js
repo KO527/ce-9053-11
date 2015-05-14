@@ -58,11 +58,11 @@ var authorize = function(req, res, next){
 };
 
 var paths = ["/", "/people/:id?", "/things", "/login"];
-var ENV = process.env.ENV || "development";
+
 
 paths.forEach(function(path){
   app.get(path, function(req, res, next){
-    res.render("index", {ENV:ENV});
+    res.render("index");
   });
 });
 
