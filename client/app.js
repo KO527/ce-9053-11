@@ -397,7 +397,8 @@ app.directive("myWorldNav", function(){
     templateUrl: "/templates/nav.html",
     controller: "NavCtrl",
     scope: {
-      showLoginButton: '@'
+      showLoginButton: '@',
+      fooBar: '@'
     }
   };
 });
