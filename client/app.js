@@ -167,7 +167,62 @@ app.factory("NavSvc", function(){
     }
   };
 });
-
+app.factory("ThingsSvc", function($q, $http, AuthSvc ){
+  return {
+    user: AuthSvc.user,
+    deleteThing: function(thing){
+      var dfd = $q.defer();
+      $http.delete("/api/things/" + thing._id +"/" + AuthSvc.getToken()).then(
+        function(result){
+          dfd.resolve(result.data); 
+        },
+        function(result){
+          dfd.reject(result.data); 
+        }
+      );
+      return dfd.promise;
+    },
+    getThings: function(){
+      var dfd = $q.defer();
+      $http.get("/api/things").then(function(result){
+        dfd.resolve(result.data);
+      });
+      return dfd.promise;
+    },
+    getThing: function(id){
+      var dfd = $q.defer();
+      $http.get("/api/things/" + id).then(function(result){
+        dfd.resolve(result.data);
+      });
+      return dfd.promise;
+    },
+    insertThing: function(thing){
+      var dfd = $q.defer();  
+      $http.post("/api/things/" + AuthSvc.getToken(), thing).then(
+        function(result){
+          console.log(result);
+          dfd.resolve(result.data);
+        },
+        function(result){
+          dfd.reject(result.data);
+        }
+      );
+      return dfd.promise;
+    },
+    updateThing: function(thing){
+      var dfd = $q.defer();
+      $http.post("/api/things/" + thing._id + "/" + AuthSvc.getToken(), thing).then(
+        function(result){
+          dfd.resolve(result.data);
+        },
+        function(result){
+          dfd.reject(result.data);
+        }
+      );
+      return dfd.promise;
+    }
+  };
+})
 //controllers
 app.controller("LoginCtrl", function($scope, $location, AuthSvc){
   if(AuthSvc.user.authenticated())
@@ -220,6 +275,7 @@ app.controller("PeopleCtrl", function($scope, $location, NavSvc, PeopleSvc){
     $location.path("/people/" + person._id);
   };
   $scope.insert = function(){
+    $scope.inserting.active = true
     PeopleSvc.insertPerson($scope.inserting).then(
       function(person){
         $scope.success = "Insert successful for " + person.name;
@@ -246,6 +302,10 @@ app.controller("PeopleCtrl", function($scope, $location, NavSvc, PeopleSvc){
 app.controller("PersonCtrl", function($scope, $location, $routeParams, NavSvc, PeopleSvc){
   NavSvc.setTab("People");
   $scope.save = function(){
+    
+    if ($scope.person.active === 'true') $scope.person.active = true
+    else if ($scope.person.active === 'false') $scope.person.active = false
+
     PeopleSvc.updatePerson($scope.person).then(
       function(person){
         $location.path("/people");
@@ -263,9 +323,64 @@ app.controller("PersonCtrl", function($scope, $location, $routeParams, NavSvc, P
   activate();
 });
 
-app.controller("ThingsCtrl", function($scope, NavSvc){
+app.controller("ThingsCtrl", function($scope, $location, NavSvc, ThingsSvc){
   NavSvc.setTab("Things");
   $scope.message = "I am the things control";
+  $scope.user = ThingsSvc.user;
+  $scope.delete = function(thing){
+    ThingsSvc.deleteThing(thing).then(
+      function(){
+        $scope.error = null;
+        $scope.success = "User has been deleted";
+        activate();
+      },
+      function(error){
+        $scope.error = error;
+      }
+    );
+  };
+  $scope.edit = function(thing){
+    $location.path("/things/" + thing._id);
+  };
+  $scope.insert = function(){
+    ThingsSvc.insertThing($scope.inserting).then(
+      function(thing){
+        $scope.success = "Insert successful for " + thing.name;
+        $scope.error = null;
+        activate();
+      },
+      function(error){
+        $scope.error = error;
+        $scope.success = null;
+      }
+    );
+  };
+  function activate(){
+    ThingsSvc.getThings().then(function(things){
+      $scope.things = things;
+    });
+  }
+  activate();
+});
+
+app.controller("ThingCtrl", function($scope, $location, $routeParams, NavSvc, ThingsSvc){
+  NavSvc.setTab("Things");
+  $scope.save = function(){
+    ThingsSvc.updateThing($scope.thing).then(
+      function(){
+        $location.path("/things");
+      },
+      function(error){
+        $scope.error = error; 
+      }
+    );
+  };
+  function activate(){
+    ThingsSvc.getThing($routeParams.id).then(function(thing){
+      $scope.thing = thing;
+    });
+  }
+  activate();
 });
 
 app.controller("FooCtrl", function($scope){
