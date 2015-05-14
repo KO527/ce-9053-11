@@ -126,7 +126,8 @@ app.factory("PeopleSvc", function($q, $http, AuthSvc ){
       return dfd.promise;
     },
     updatePerson: function(person){
-      var dfd = $q.defer();  
+      var dfd = $q.defer(); 
+      console.log('active: ' + person.active + ': ' + typeof person.active)
       $http.post("/api/people/" + person._id + "/" + AuthSvc.getToken(), person).then(
         function(result){
           dfd.resolve(result.data);
